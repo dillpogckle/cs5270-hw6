@@ -70,6 +70,9 @@ def process_request(req: dict, s3_client=None, web_bucket=None, ddb_table=None):
         elif ddb_table:
             ddb_table.put_item(Item=to_dynamodb_item(req))
             logging.info(f"Created widget {widget_id} in DynamoDB")
+    elif req_type in ("update", "delete"):
+        # logs warning, waiting for futur implementation
+        logging.warning(f"Request type '{req_type}' for widget {widget_id} not implemented yet")
     else:
         raise ValueError(f"Unknown request type: {req_type}")
 
