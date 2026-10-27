@@ -91,7 +91,8 @@ def main():
     )
 
     s3 = boto3.client("s3")
-    ddb_table = boto3.resource("dynamodb").Table(args.dwt) if args.dwt else None
+    # requires region
+    ddb_table = boto3.resource("dynamodb", region_name="us-east-1").Table(args.dwt) if args.dwt else None
 
     logging.info("Starting Consumer polling loop (Ctrl+C to stop)...")
     try:
