@@ -2,6 +2,13 @@ from io import BytesIO
 import json
 from unittest.mock import MagicMock
 import pytest
+from consumer import (
+    format_s3_key,
+    to_dynamodb_item,
+    get_next_request,
+    process_request,
+    parse_args,
+)
 
 def test_format_s3_key():
     assert format_s3_key("John Doe", "123") == "widgets/john-doe/123"
