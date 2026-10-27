@@ -1,0 +1,12 @@
+# Python Stuff
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+
+# Log files
+*.log
