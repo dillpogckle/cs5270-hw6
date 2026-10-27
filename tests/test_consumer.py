@@ -3,6 +3,25 @@ import json
 from unittest.mock import MagicMock
 import pytest
 
+def test_format_s3_key():
+    assert format_s3_key("John Doe", "123") == "widgets/john-doe/123"
+    assert format_s3_key("  Alice   Smith ", "abc") == "widgets/alice-smith/abc"
+
+def test_to_dynamodb_item_flattens_attributes():
+    req = {
+        "widgetId": "w1",
+        "owner": "Sue",
+        "label": "Box",
+        "otherAttributes": [{"name": "color", "value": "red"}, {"name": "size", "value": "10"}],
+    }
+    item = to_dynamodb_item(req)
+    assert item["id"] == "w1"
+    assert item["widget_id"] == "w1"
+    assert item["owner"] == "Sue"
+    assert item["color"] == "red"
+    assert item["size"] == "10"
+    assert "otherAttributes" not in item
+
 def test_get_next_request_empty_and_non_empty():
     mock_s3 = MagicMock()
     
