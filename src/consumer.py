@@ -2,6 +2,8 @@ import argparse
 from datetime import datetime, timezone
 import json
 import logging
+import boto3
+import time
 
 # Helper for Bucket 3 key formatting
 def format_s3_key(owner: str, widget_id: str) -> str:
@@ -51,7 +53,25 @@ def get_next_request(s3_client, bucket_name: str):
 
 # Request router & storage handler
 def process_request(req: dict, s3_client=None, web_bucket=None, ddb_table=None):
-    pass
+    req_type = req.get("type")
+    widget_id = req.get("widgetId")
+    owner = req.get("owner")
+
+    # required options
+    if not req_type or not widget_id or not owner:
+        raise ValueError("Missing required fields in widget request")
+
+    # creates widget depending on specified storage
+    if req_type == "create":
+        if web_bucket:
+            key = format_s3_key(owner, widget_id)
+            s3_client.put_object(Bucket=web_bucket, Key=key, Body=json.dumps(req))
+            logging.info(f"Created widget {widget_id} in S3 bucket {web_bucket} at {key}")
+        elif ddb_table:
+            ddb_table.put_item(Item=to_dynamodb_item(req))
+            logging.info(f"Created widget {widget_id} in DynamoDB")
+    else:
+        raise ValueError(f"Unknown request type: {req_type}")
 
 # Parses CLI flags
 def parse_args(args=None):
@@ -63,7 +83,26 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 def main():
-    pass
+    args = parse_args()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.FileHandler("consumer.log"), logging.StreamHandler()],
+    )
+
+    s3 = boto3.client("s3")
+    ddb_table = boto3.resource("dynamodb").Table(args.dwt) if args.dwt else None
+
+    logging.info("Starting Consumer polling loop (Ctrl+C to stop)...")
+    try:
+        while True:
+            req = get_next_request(s3, args.rb)
+            if req:
+                process_request(req, s3_client=s3, web_bucket=args.wb, ddb_table=ddb_table)
+            else:
+                time.sleep(0.1)  # wait when no requests are available
+    except KeyboardInterrupt:
+        logging.info("Consumer stopped.")
 
 if __name__ == "__main__":
     main()

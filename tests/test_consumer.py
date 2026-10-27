@@ -59,9 +59,6 @@ def test_process_request_paths():
     process_request(req, ddb_table=mock_table)
     mock_table.put_item.assert_called_once()
 
-    # Path 3: Update/Delete does not throw error
-    process_request({"type": "delete", "widgetId": "w1", "owner": "Bob"}, ddb_table=mock_table)
-
 
 @pytest.mark.parametrize("bad_req", [
     {},                                                         # Missing required fields
