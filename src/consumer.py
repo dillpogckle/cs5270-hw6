@@ -1,12 +1,32 @@
 import argparse
+from datetime import datetime, timezone
 
 # Helper for Bucket 3 key formatting
 def format_s3_key(owner: str, widget_id: str) -> str:
-    pass
+    # sanatize and format
+    clean_owner = "-".join(owner.strip().lower().split())
+    return f"widgets/{clean_owner}/{widget_id}"
 
 # Helper for DynamoDB formatting
 def to_dynamodb_item(req: dict) -> dict:
-    pass
+    # parts expected everytime
+    item = {
+        "id": req["widgetId"],                 
+        "widget_id": req["widgetId"],          
+        "owner": req["owner"],
+        "last_modified_on": datetime.now(timezone.utc).isoformat(),
+    }
+    # might be there
+    if req.get("label"):
+        item["label"] = req["label"]
+    if req.get("description"):
+        item["description"] = req["description"]
+
+    # deals with "other" attributes
+    for attr in req.get("otherAttributes", []):
+        item[attr["name"]] = attr["value"]
+
+    return item
 
 # Request retrieval (swappable for future homework)
 def get_next_request(s3_client, bucket_name: str):
